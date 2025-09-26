@@ -25,9 +25,8 @@ def get_tradable_usdc_pairs():
     Récupère une liste filtrée de symboles, ne gardant que les paires
     cotées en USDC et actuellement en statut 'TRADING'.
     """
-    client = Client()
-
     try:
+        client = Client()
         exchange_info = client.get_exchange_info()
 
         usdc_symbols = []
@@ -40,4 +39,6 @@ def get_tradable_usdc_pairs():
 
     except Exception as e:
         print(f"Une erreur est survenue : {e}")
-        return None
+        print("Retour d'une liste de paires mockées à des fins de développement.")
+        # Retourner une liste mockée en cas d'erreur (par exemple, pour le développement local)
+        return ["BTCUSDC", "ETHUSDC", "BNBUSDC", "XRPUSDC", "ADAUSDC", "SOLUSDC", "DOGEUSDC", "AVAXUSDC", "LTCUSDC", "DOTUSDC"]
