@@ -1,18 +1,40 @@
-from binance_client import get_all_binance_symbols, get_tradable_usdc_pairs
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from typing import List, Optional
 
-if __name__ == "__main__":
-    print("Récupération de tous les symboles disponibles sur Binance...")
-    all_symbols_list = get_all_binance_symbols()
+from src.binance_client import get_tradable_usdc_pairs
 
-    if all_symbols_list:
-        print(f"Succès! Nombre total de symboles trouvés : {len(all_symbols_list)}")
-        print("Voici quelques exemples :", all_symbols_list[:5])
-        print("-" * 50)
+app = FastAPI()
 
-    print("Récupération de toutes les paires USDC actuellement tradables...")
-    usdc_symbols_list = get_tradable_usdc_pairs()
+# Configuration CORS
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
 
-    if usdc_symbols_list:
-        print(f"Succès! Nombre de paires USDC tradables trouvées : {len(usdc_symbols_list)}")
-        print("Voici quelques exemples :", usdc_symbols_list[:5])
-        print("-" * 50)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/api/pairs", response_model=List[str])
+async def read_pairs(search: Optional[str] = None):
+    """
+    Retourne une liste de paires USDC tradables.
+    Si un paramètre 'search' est fourni, filtre les paires qui commencent par la chaîne de recherche.
+    """
+    try:
+        pairs = get_tradable_usdc_pairs()
+        if not pairs:
+            raise HTTPException(status_code=404, detail="Aucune paire trouvée ou erreur lors de la récupération.")
+
+        if search:
+            return [pair for pair in pairs if pair.startswith(search.upper())]
+
+        return pairs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
