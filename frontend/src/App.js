@@ -3,34 +3,35 @@ import './App.css';
 
 function App() {
   const [search, setSearch] = useState('');
-  const [pairs, setPairs] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [allPairs, setAllPairs] = useState([]);
+  const [filteredPairs, setFilteredPairs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (search.length === 0) {
-      setPairs([]);
-      return;
-    }
-
-    const fetchPairs = async () => {
-      setLoading(true);
+    const fetchAllPairs = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/pairs?search=${search}`);
+        const response = await fetch('http://localhost:8000/api/pairs');
         const data = await response.json();
-        setPairs(data);
+        setAllPairs(data);
       } catch (error) {
-        console.error("Erreur lors de la récupération des paires:", error);
-        setPairs([]);
+        console.error("Erreur lors de la récupération de toutes les paires:", error);
       }
       setLoading(false);
     };
 
-    const debounceFetch = setTimeout(() => {
-      fetchPairs();
-    }, 300);
+    fetchAllPairs();
+  }, []);
 
-    return () => clearTimeout(debounceFetch);
-  }, [search]);
+  useEffect(() => {
+    if (search.length === 0) {
+      setFilteredPairs([]);
+    } else {
+      const filtered = allPairs.filter(pair =>
+        pair.toLowerCase().startsWith(search.toLowerCase())
+      );
+      setFilteredPairs(filtered);
+    }
+  }, [search, allPairs]);
 
   return (
     <div className="App">
@@ -45,9 +46,9 @@ function App() {
             className="search-input"
           />
           {loading && <div className="loader"></div>}
-          {pairs.length > 0 && (
+          {filteredPairs.length > 0 && (
             <ul className="suggestions-list">
-              {pairs.map((pair) => (
+              {filteredPairs.map((pair) => (
                 <li key={pair}>{pair}</li>
               ))}
             </ul>
