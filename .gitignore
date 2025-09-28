@@ -35,3 +35,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Data files
+top_*_cryptos_tradability.json

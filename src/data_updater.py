@@ -51,30 +51,30 @@ def get_coins_markets_with_rate_limit(cg_client, **kwargs):
     """
     return cg_client.get_coins_markets(**kwargs)
 
-def get_top_500_crypto_data():
-    """Fetch market data for the top 500 cryptocurrencies from CoinGecko."""
+def get_top_3000_crypto_data():
+    """Fetch market data for the top 3000 cryptocurrencies from CoinGecko."""
     print("Initializing CoinGecko client...")
     try:
         cg = CoinGeckoAPI()
+        all_coins = []
+        # 12 pages * 250 results per page = 3000
+        for i in range(1, 13):
+            print(f"Fetching page {i}/12 of crypto data (coins {(i-1)*250+1}-{i*250})...")
+            coins_page = get_coins_markets_with_rate_limit(
+                cg, vs_currency='usd', order='market_cap_desc', per_page=250, page=i
+            )
+            if not coins_page:
+                print(f"No more data from CoinGecko on page {i}. Stopping.")
+                break
+            all_coins.extend(coins_page)
 
-        print("Fetching first page of results (1-250)...")
-        coins_page1 = get_coins_markets_with_rate_limit(
-            cg, vs_currency='usd', order='market_cap_desc', per_page=250, page=1
-        )
-
-        print("Fetching second page of results (251-500)...")
-        coins_page2 = get_coins_markets_with_rate_limit(
-            cg, vs_currency='usd', order='market_cap_desc', per_page=250, page=2
-        )
-
-        all_coins = coins_page1 + coins_page2
         print(f"Total of {len(all_coins)} cryptocurrencies fetched from CoinGecko.")
         return all_coins
     except Exception as e:
         print(f"An error occurred while communicating with the CoinGecko API: {e}")
         return None
 
-def process_and_save_data(coins_data, binance_symbols, filename="top_500_cryptos_tradability.json"):
+def process_and_save_data(coins_data, binance_symbols, filename="top_3000_cryptos_tradability.json"):
     """Process crypto data and save the result to a JSON file."""
     if not coins_data:
         print("No data from CoinGecko to process.")
@@ -136,9 +136,9 @@ def run_update():
         }
 
     try:
-        top_500_data = get_top_500_crypto_data()
-        if top_500_data:
-            process_and_save_data(top_500_data, binance_symbols)
+        top_3000_data = get_top_3000_crypto_data()
+        if top_3000_data:
+            process_and_save_data(top_3000_data, binance_symbols)
         else:
             print("Script finished early as no data could be fetched from CoinGecko.")
     except Exception as e:
