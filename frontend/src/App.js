@@ -47,7 +47,7 @@ function App() {
   }, [search, debouncedFetch]);
 
   const handleSelectCoin = async (coin) => {
-    setSearch(coin.name);
+    setSearch('');
     setSelectedCoin(coin);
     setSuggestions([]);
     setPriceInfo(null);
