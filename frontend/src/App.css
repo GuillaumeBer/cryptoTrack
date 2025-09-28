@@ -1,11 +1,26 @@
+/* General Body Styles */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #121212;
+  color: #E0E0E0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* App Container */
 .App {
   text-align: center;
-  font-family: Arial, sans-serif;
+  width: 100%;
+  max-width: 500px;
+  padding: 2rem;
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  background-color: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14,57 +29,169 @@
   color: white;
 }
 
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #FFFFFF;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #aaa;
+  margin-top: -0.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Controls Container for Refresh Button */
+.controls-container {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+button {
+  background-color: #333;
+  color: #FFF;
+  border: 1px solid #555;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+button:hover {
+  background-color: #444;
+  border-color: #777;
+}
+
+button:disabled {
+  background-color: #222;
+  color: #555;
+  cursor: not-allowed;
+}
+
+.refresh-message {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-left: 1rem;
+  align-self: center;
+}
+
+/* Search Container & Input */
 .search-container {
   position: relative;
-  width: 300px;
+  width: 100%;
+  margin-bottom: 1.5rem;
 }
 
 .search-input {
   width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+  padding: 1rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: #1e1e1e;
+  color: #E0E0E0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
 }
 
+.search-input::placeholder {
+  color: #777;
+}
+
+/* Suggestions List */
 .suggestions-list {
   position: absolute;
   width: 100%;
-  background-color: white;
-  border: 1px solid #ddd;
+  background-color: #1e1e1e;
+  border: 1px solid #444;
   border-top: none;
   list-style-type: none;
   padding: 0;
   margin: 0;
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
   z-index: 1000;
-  color: #333;
+  border-radius: 0 0 8px 8px;
 }
 
 .suggestions-list li {
-  padding: 10px;
+  padding: 1rem;
   cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.suggestions-list li:last-child {
+  border-bottom: none;
 }
 
 .suggestions-list li:hover {
-  background-color: #f0f0f0;
+  background-color: #333;
 }
 
+/* Price Display */
+.price-display {
+  position: relative;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+.price-result {
+  background-color: #1e1e1e;
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+}
+
+.price-result h2 {
+  font-size: 1.5rem;
+  margin-top: 0;
+  font-weight: 600;
+}
+
+.price-result .price {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #4CAF50; /* A vibrant color for the price */
+  margin: 1rem 0;
+}
+
+.price-result .source {
+  font-size: 1rem;
+  color: #aaa;
+}
+
+/* Loader */
 .loader {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 4px solid #f3f3f3;
+  border: 4px solid #333;
   border-radius: 50%;
-  border-top: 4px solid #3498db;
+  border-top: 4px solid #4A90E2;
   width: 20px;
   height: 20px;
-  animation: spin 2s linear infinite;
+  animation: spin 1s linear infinite;
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Error Message */
+.error-message {
+  color: #E57373; /* A softer red for errors */
+  background-color: rgba(229, 115, 115, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #E57373;
 }
