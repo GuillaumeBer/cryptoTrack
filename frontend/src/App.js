@@ -165,11 +165,22 @@ function App() {
         method: 'POST',
       });
       const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.detail || 'Une erreur est survenue.');
+        if (response.status === 409) {
+          // A refresh is already in progress, this is not an error.
+          // Start polling to monitor the existing refresh.
+          setRefreshMessage(data.detail || 'Un rafraîchissement est déjà en cours, suivi de la progression.');
+          startRefreshPolling();
+        } else {
+          // For other errors, throw to be caught by the catch block.
+          throw new Error(data.detail || 'Une erreur est survenue.');
+        }
+      } else {
+        // This is the success case (e.g., 200 OK)
+        setRefreshMessage(data.message);
+        startRefreshPolling();
       }
-      setRefreshMessage(data.message);
-      startRefreshPolling();
     } catch (error) {
       setRefreshMessage(`Erreur: ${error.message}`);
     }
