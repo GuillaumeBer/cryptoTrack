@@ -5,9 +5,10 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 
+import threading
 from src.binance_client import get_price_from_binance
 from src.coingecko_client import get_price_from_coingecko
-from src.data_updater import run_update
+from src.data_updater import run_update, update_progress
 
 app = FastAPI()
 
@@ -37,7 +38,7 @@ def load_crypto_data() -> List[Dict[str, Any]]:
         # This makes the data loading independent of the current working directory.
         script_dir = os.path.dirname(__file__)  # The directory this script is in (src/)
         project_root = os.path.dirname(script_dir) # The parent directory (project root)
-        json_path = os.path.join(project_root, 'top_500_cryptos_tradability.json')
+        json_path = os.path.join(project_root, 'top_3000_cryptos_tradability.json')
 
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -48,7 +49,7 @@ def load_crypto_data() -> List[Dict[str, Any]]:
         return coins
 
     except FileNotFoundError:
-        raise HTTPException(status_code=500, detail="Le fichier de données 'top_500_cryptos_tradability.json' est introuvable.")
+        raise HTTPException(status_code=500, detail="Le fichier de données 'top_3000_cryptos_tradability.json' est introuvable.")
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Erreur de décodage du fichier JSON. Le fichier est peut-être corrompu.")
 
@@ -71,23 +72,50 @@ async def read_pairs(search: Optional[str] = Query(None, min_length=1)):
 
     return filtered_coins
 
+@app.on_event("startup")
+async def startup_event():
+    """
+    Vérifie l'existence du fichier de données au démarrage.
+    S'il n'existe pas, lance une mise à jour initiale en arrière-plan.
+    """
+    script_dir = os.path.dirname(__file__)
+    project_root = os.path.dirname(script_dir)
+    json_path = os.path.join(project_root, 'top_3000_cryptos_tradability.json')
+
+    if not os.path.exists(json_path):
+        print("Le fichier de données n'existe pas. Lancement de la mise à jour initiale en arrière-plan.")
+        thread = threading.Thread(target=run_update)
+        thread.start()
+
 @app.post("/api/refresh-data")
 async def refresh_data():
     """
-    Déclenche le processus de mise à jour du fichier de données JSON
-    et vide le cache pour que les nouvelles données soient chargées.
+    Déclenche le processus de mise à jour du fichier de données JSON en arrière-plan.
     """
+    if update_progress['status'] == 'running':
+        raise HTTPException(status_code=409, detail="Un rafraîchissement est déjà en cours.")
+
     try:
-        print("Début de la mise à jour des données via l'API...")
-        run_update()
-        # Vider le cache de la fonction pour forcer la relecture du fichier
+        print("Début de la mise à jour des données en arrière-plan via l'API...")
+
+        # Lancer `run_update` dans un thread séparé
+        thread = threading.Thread(target=run_update)
+        thread.start()
+
+        # Vider le cache pour que les prochaines requêtes attendent potentiellement les nouvelles données
         load_crypto_data.cache_clear()
-        print("Mise à jour des données et vidage du cache terminés.")
-        return {"message": "Les données ont été rafraîchies avec succès."}
+
+        return {"message": "Le rafraîchissement des données a été lancé en arrière-plan."}
     except Exception as e:
-        # Log de l'erreur côté serveur pour le débogage
-        print(f"Erreur lors du rafraîchissement des données : {e}")
-        raise HTTPException(status_code=500, detail="Une erreur interne est survenue lors du rafraîchissement des données.")
+        print(f"Erreur lors du lancement du rafraîchissement des données : {e}")
+        raise HTTPException(status_code=500, detail="Une erreur interne est survenue lors du lancement du rafraîchissement.")
+
+@app.get("/api/refresh-status")
+async def get_refresh_status():
+    """
+    Retourne le statut actuel du processus de rafraîchissement des données.
+    """
+    return update_progress
 
 @app.get("/api/price")
 async def get_price(symbol: str, coin_id: str, is_tradable: bool):

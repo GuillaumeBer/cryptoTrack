@@ -10,9 +10,10 @@ function App() {
   const [isPriceLoading, setIsPriceLoading] = useState(false);
   const [priceError, setPriceError] = useState(null);
 
-  // New state for the refresh functionality
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  // State for the refresh functionality
   const [refreshMessage, setRefreshMessage] = useState('');
+  const [refreshProgress, setRefreshProgress] = useState({ current: 0, total: 0, stage: '' });
+  const [showProgressBar, setShowProgressBar] = useState(false);
 
   const debounce = (func, delay) => {
     let timeout;
@@ -30,6 +31,14 @@ function App() {
     setIsSearching(true);
     try {
       const response = await fetch(`http://localhost:8000/api/pairs?search=${searchTerm}`);
+      if (response.status === 500) {
+        const errorData = await response.json();
+        if (errorData.detail && errorData.detail.includes("est introuvable")) {
+          console.log("Fichier de données manquant, déclenchement du rafraîchissement.");
+          handleRefresh(); // Déclenche le rafraîchissement si le fichier n'est pas trouvé
+        }
+        throw new Error('Erreur serveur lors de la recherche.');
+      }
       if (!response.ok) throw new Error('Network response was not ok.');
       const data = await response.json();
       setSuggestions(data);
@@ -45,6 +54,27 @@ function App() {
   useEffect(() => {
     debouncedFetch(search);
   }, [search, debouncedFetch]);
+
+  // Check for data on startup
+  useEffect(() => {
+    const checkDataAndRefresh = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/pairs?search=b`);
+        if (response.status === 500) {
+          const errorData = await response.json();
+          if (errorData.detail && errorData.detail.includes("est introuvable")) {
+            console.log("Fichier de données manquant, déclenchement du rafraîchissement automatique.");
+            handleRefresh();
+          }
+        }
+      } catch (error) {
+        console.error("Impossible de joindre le serveur au démarrage:", error);
+        setRefreshMessage("Impossible de se connecter au serveur. Veuillez vérifier qu'il est en cours d'exécution.");
+      }
+    };
+    checkDataAndRefresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSelectCoin = async (coin) => {
     setSearch('');
@@ -79,10 +109,37 @@ function App() {
     }
   };
 
-  // Function to handle the data refresh
+  const startRefreshPolling = () => {
+    setShowProgressBar(true);
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/refresh-status');
+        const progress = await response.json();
+
+        setRefreshProgress({
+          current: progress.current,
+          total: progress.total,
+          stage: progress.stage,
+        });
+
+        if (progress.status === 'complete' || progress.status === 'error') {
+          clearInterval(interval);
+          setShowProgressBar(false);
+          setRefreshMessage(progress.status === 'complete' ? 'Rafraîchissement terminé avec succès.' : `Erreur: ${progress.error_message}`);
+          setTimeout(() => setRefreshMessage(''), 5000);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération du statut de rafraîchissement:", error);
+        clearInterval(interval);
+        setShowProgressBar(false);
+        setRefreshMessage('Erreur de connexion au serveur.');
+        setTimeout(() => setRefreshMessage(''), 5000);
+      }
+    }, 1000);
+  };
+
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    setRefreshMessage('Rafraîchissement des données en cours...');
+    setRefreshMessage('Lancement du rafraîchissement...');
     try {
       const response = await fetch('http://localhost:8000/api/refresh-data', {
         method: 'POST',
@@ -92,28 +149,33 @@ function App() {
         throw new Error(data.detail || 'Une erreur est survenue.');
       }
       setRefreshMessage(data.message);
-      // Clear search and price info after successful refresh
-      setSearch('');
-      setSelectedCoin(null);
-      setPriceInfo(null);
-      setPriceError(null);
+      startRefreshPolling();
     } catch (error) {
       setRefreshMessage(`Erreur: ${error.message}`);
     }
-    setIsRefreshing(false);
-    // Hide the message after a few seconds
-    setTimeout(() => setRefreshMessage(''), 5000);
   };
 
   return (
     <div className="App">
       <header className="App-header">
         <div className="controls-container">
-          <button onClick={handleRefresh} disabled={isRefreshing}>
-            {isRefreshing ? 'En cours...' : 'Rafraîchir les Données'}
+          <button onClick={handleRefresh} disabled={showProgressBar}>
+            {showProgressBar ? 'En cours...' : 'Rafraîchir les Données'}
           </button>
           {refreshMessage && <p className="refresh-message">{refreshMessage}</p>}
         </div>
+        {showProgressBar && (
+          <div className="progress-container">
+            <p>{refreshProgress.stage}</p>
+            <div className="progress-bar-background">
+              <div
+                className="progress-bar-foreground"
+                style={{ width: `${(refreshProgress.current / (refreshProgress.total || 1)) * 100}%` }}
+              ></div>
+            </div>
+            <p>{refreshProgress.total > 0 ? `${refreshProgress.current} / ${refreshProgress.total}`: ''}</p>
+          </div>
+        )}
         <h1>Chercher une Paire de Trading USDC</h1>
         <div className="search-container">
           <input
