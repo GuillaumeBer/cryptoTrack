@@ -155,6 +155,20 @@ function App() {
     }
   };
 
+  const formatPrice = (price) => {
+    if (price === null || typeof price === 'undefined') {
+      return '';
+    }
+    if (price >= 0.01) {
+      return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    if (price > 0 && price < 0.01) {
+      const decimals = -Math.floor(Math.log10(price)) + 3;
+      return price.toFixed(decimals);
+    }
+    return '0.00';
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -202,7 +216,7 @@ function App() {
           {priceInfo && (
             <div className="price-result">
               <h2>Prix pour {selectedCoin.name} ({priceInfo.symbol})</h2>
-              <p className="price">${priceInfo.price.toLocaleString()}</p>
+              <p className="price">${formatPrice(priceInfo.price)}</p>
               <p className="source">Source: {priceInfo.source}</p>
             </div>
           )}
