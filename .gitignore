@@ -6,7 +6,15 @@ __pycache__/
 .Python
 env/
 venv/
-pip-selfcheck.json
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.so
 *.egg-info/
 dist/
 build/
@@ -16,11 +24,10 @@ node_modules/
 npm-debug.log
 yarn-error.log
 package-lock.json
-yarn.lock
 
-# IDEs
-.vscode/
-.idea/
+# Frontend
+frontend/build/
+frontend/node_modules/
 
 # OS
 .DS_Store

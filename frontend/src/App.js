@@ -108,13 +108,13 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Chercher une Paire de Trading USDC</h1>
         <div className="controls-container">
           <button onClick={handleRefresh} disabled={isRefreshing}>
             {isRefreshing ? 'En cours...' : 'Rafraîchir les Données'}
           </button>
           {refreshMessage && <p className="refresh-message">{refreshMessage}</p>}
         </div>
+        <h1>Chercher une Paire de Trading USDC</h1>
         <div className="search-container">
           <input
             type="text"
