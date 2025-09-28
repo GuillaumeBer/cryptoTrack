@@ -8,6 +8,7 @@ checking its tradability on Binance, and saving it to a JSON file.
 import json
 import os
 from datetime import datetime, timezone
+from ratelimit import limits
 from pycoingecko import CoinGeckoAPI
 from binance.client import Client
 
@@ -38,15 +39,34 @@ def get_binance_tradable_symbols(client):
         }
         return mock_symbols
 
+# CoinGecko's public API rate limit is around 10-30 calls per minute.
+# We'll set a conservative limit of 10 calls per minute.
+TEN_CALLS_PER_MINUTE = 10
+ONE_MINUTE = 60
+
+@limits(calls=TEN_CALLS_PER_MINUTE, period=ONE_MINUTE)
+def get_coins_markets_with_rate_limit(cg_client, **kwargs):
+    """
+    A rate-limited wrapper for the PyCoinGecko get_coins_markets method.
+    """
+    return cg_client.get_coins_markets(**kwargs)
+
 def get_top_500_crypto_data():
     """Fetch market data for the top 500 cryptocurrencies from CoinGecko."""
     print("Initializing CoinGecko client...")
     try:
         cg = CoinGeckoAPI()
+
         print("Fetching first page of results (1-250)...")
-        coins_page1 = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=250, page=1)
+        coins_page1 = get_coins_markets_with_rate_limit(
+            cg, vs_currency='usd', order='market_cap_desc', per_page=250, page=1
+        )
+
         print("Fetching second page of results (251-500)...")
-        coins_page2 = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=250, page=2)
+        coins_page2 = get_coins_markets_with_rate_limit(
+            cg, vs_currency='usd', order='market_cap_desc', per_page=250, page=2
+        )
+
         all_coins = coins_page1 + coins_page2
         print(f"Total of {len(all_coins)} cryptocurrencies fetched from CoinGecko.")
         return all_coins
