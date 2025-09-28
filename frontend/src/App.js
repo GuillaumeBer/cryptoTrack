@@ -198,6 +198,7 @@ function App() {
             value={search}
             onChange={handleSearchChange}
             className="search-input"
+            disabled={showProgressBar}
           />
           {isSearching && <div className="loader"></div>}
           {suggestions.length > 0 && (
