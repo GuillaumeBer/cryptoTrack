@@ -17,7 +17,7 @@ Prérequis :
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pycoingecko import CoinGeckoAPI
 from binance.client import Client
 
@@ -129,7 +129,7 @@ def process_and_save_data(coins_data, binance_symbols, filename="top_300_cryptos
         processed_data.append(coin_details)
 
     data_to_save = {
-        'timestamp_utc': datetime.utcnow().isoformat(),
+        'timestamp_utc': datetime.now(timezone.utc).isoformat(),
         'count': len(processed_data),
         'coins': processed_data
     }
