@@ -55,24 +55,44 @@ function App() {
     debouncedFetch(search);
   }, [search, debouncedFetch]);
 
-  // Check for data on startup
+  // Check for data on startup and handle connection to backend
   useEffect(() => {
-    const checkDataAndRefresh = async () => {
+    // Set an interval to poll the backend until it's available.
+    const startupInterval = setInterval(async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/pairs?search=b`);
-        if (response.status === 500) {
-          const errorData = await response.json();
-          if (errorData.detail && errorData.detail.includes("est introuvable")) {
-            console.log("Fichier de données manquant, déclenchement du rafraîchissement automatique.");
-            handleRefresh();
+        const statusResponse = await fetch('http://localhost:8000/api/refresh-status');
+
+        // If we get a successful response, the backend is up.
+        // Stop polling.
+        clearInterval(startupInterval);
+        setRefreshMessage(''); // Clear the "Connecting..." message.
+
+        const statusData = await statusResponse.json();
+
+        if (statusData.status === 'in_progress') {
+          // A refresh is already running (e.g., initial data generation).
+          console.log("Un rafraîchissement est déjà en cours au démarrage, surveillance en cours.");
+          startRefreshPolling();
+        } else {
+          // If no refresh is running, check if the data file exists.
+          const pairsResponse = await fetch(`http://localhost:8000/api/pairs?search=b`);
+          if (pairsResponse.status === 500) {
+            const errorData = await pairsResponse.json();
+            if (errorData.detail && errorData.detail.includes("est introuvable")) {
+              console.log("Fichier de données manquant, déclenchement du rafraîchissement automatique.");
+              handleRefresh();
+            }
           }
         }
       } catch (error) {
-        console.error("Impossible de joindre le serveur au démarrage:", error);
-        setRefreshMessage("Impossible de se connecter au serveur. Veuillez vérifier qu'il est en cours d'exécution.");
+        // This catch block runs if the fetch fails, meaning the server is likely down.
+        console.log("Backend non disponible, nouvelle tentative...");
+        setRefreshMessage("Connexion au serveur en cours...");
       }
-    };
-    checkDataAndRefresh();
+    }, 2000); // Poll every 2 seconds.
+
+    // Cleanup interval on component unmount.
+    return () => clearInterval(startupInterval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
