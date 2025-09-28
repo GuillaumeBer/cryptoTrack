@@ -195,3 +195,37 @@ button:disabled {
   border-radius: 8px;
   border: 1px solid #E57373;
 }
+
+/* Progress Bar */
+.progress-container {
+  width: 100%;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.progress-container p {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.progress-bar-background {
+  background-color: #333;
+  border-radius: 8px;
+  height: 24px;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #444;
+}
+
+.progress-bar-foreground {
+  background-color: #4A90E2;
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 500;
+}
