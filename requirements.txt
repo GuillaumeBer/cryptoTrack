@@ -1,3 +1,5 @@
 python-binance
 fastapi
 uvicorn
+pycoingecko
+ratelimit
