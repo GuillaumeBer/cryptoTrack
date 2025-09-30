@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
+import LendingPage from './LendingPage';
 
 function App() {
+  const [view, setView] = useState('priceChecker'); // 'priceChecker' or 'lending'
   const [search, setSearch] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -203,13 +205,25 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <div className="controls-container">
-          <button onClick={handleRefresh} disabled={showProgressBar}>
-            {showProgressBar ? 'En cours...' : 'Rafraîchir les Données'}
+        <nav className="main-nav">
+          <button onClick={() => setView('priceChecker')} className={view === 'priceChecker' ? 'active' : ''}>
+            Crypto Price Checker
           </button>
-          {refreshMessage && <p className="refresh-message">{refreshMessage}</p>}
-        </div>
-        {showProgressBar && (
+          <button onClick={() => setView('lending')} className={view === 'lending' ? 'active' : ''}>
+            Jupiter Lending
+          </button>
+        </nav>
+
+        {view === 'priceChecker' && (
+          <div className="controls-container">
+            <button onClick={handleRefresh} disabled={showProgressBar}>
+              {showProgressBar ? 'En cours...' : 'Rafraîchir les Données'}
+            </button>
+            {refreshMessage && <p className="refresh-message">{refreshMessage}</p>}
+          </div>
+        )}
+
+        {showProgressBar && view === 'priceChecker' && (
           <div className="progress-container">
             <p>{refreshProgress.stage}</p>
             <div className="progress-bar-background">
@@ -221,39 +235,47 @@ function App() {
             <p>{refreshProgress.total > 0 ? `${refreshProgress.current} / ${refreshProgress.total}`: ''}</p>
           </div>
         )}
-        <h1>Chercher une Paire de Trading USDC</h1>
-        <div className="search-container">
-          <input
-            type="text"
-            placeholder="Commencez à taper (ex: Bitcoin)..."
-            value={search}
-            onChange={handleSearchChange}
-            className="search-input"
-            disabled={showProgressBar}
-          />
-          {isSearching && <div className="loader"></div>}
-          {suggestions.length > 0 && (
-            <ul className="suggestions-list">
-              {suggestions.map((coin) => (
-                <li key={coin.id} onClick={() => handleSelectCoin(coin)}>
-                  {coin.name} ({coin.symbol})
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="price-display">
-          {isPriceLoading && <div className="loader"></div>}
-          {priceError && <p className="error-message">Erreur : {priceError}</p>}
-          {priceInfo && (
-            <div className="price-result">
-              <h2>Prix pour {selectedCoin.name} ({priceInfo.symbol})</h2>
-              <p className="price">${formatPrice(priceInfo.price)}</p>
-              <p className="source">Source: {priceInfo.source}</p>
-            </div>
-          )}
-        </div>
       </header>
+      <main className="App-content">
+        {view === 'priceChecker' ? (
+          <>
+            <h1>Chercher une Paire de Trading USDC</h1>
+            <div className="search-container">
+              <input
+                type="text"
+                placeholder="Commencez à taper (ex: Bitcoin)..."
+                value={search}
+                onChange={handleSearchChange}
+                className="search-input"
+                disabled={showProgressBar}
+              />
+              {isSearching && <div className="loader"></div>}
+              {suggestions.length > 0 && (
+                <ul className="suggestions-list">
+                  {suggestions.map((coin) => (
+                    <li key={coin.id} onClick={() => handleSelectCoin(coin)}>
+                      {coin.name} ({coin.symbol})
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="price-display">
+              {isPriceLoading && <div className="loader"></div>}
+              {priceError && <p className="error-message">Erreur : {priceError}</p>}
+              {priceInfo && (
+                <div className="price-result">
+                  <h2>Prix pour {selectedCoin.name} ({priceInfo.symbol})</h2>
+                  <p className="price">${formatPrice(priceInfo.price)}</p>
+                  <p className="source">Source: {priceInfo.source}</p>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <LendingPage />
+        )}
+      </main>
     </div>
   );
 }

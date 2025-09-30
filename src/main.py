@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 
 import threading
+import httpx
 from src.binance_client import get_price_from_binance
 from src.coingecko_client import get_price_from_coingecko
 from src.data_updater import run_update, update_progress
@@ -141,3 +142,53 @@ async def get_price(symbol: str, coin_id: str, is_tradable: bool):
         raise HTTPException(status_code=404, detail="Impossible de récupérer le prix pour le symbole demandé.")
 
     return {"symbol": symbol, "price": price, "source": source}
+
+
+@app.get("/api/jupiter-lend-positions/{wallet_address}")
+async def get_jupiter_lend_positions(wallet_address: str):
+    """
+    Récupère les positions d'emprunt d'un portefeuille sur Jupiter Lend.
+    """
+    url = f"https://lite-api.jup.ag/lend/v1/positions/{wallet_address}"
+    # Utilisation de données de démonstration si l'adresse est "DEMO"
+    if wallet_address.upper() == "DEMO":
+        return [
+            {
+                "collateral": "SOL",
+                "collateralValue": 1500.50,
+                "borrowed": "USDC",
+                "borrowValue": 750.25,
+                "ratio": 50.00,
+                "healthFactor": 1.7,
+                "riskLevel": "safe"
+            },
+            {
+                "collateral": "JitoSOL",
+                "collateralValue": 2500.00,
+                "borrowed": "USDT",
+                "borrowValue": 1800.00,
+                "ratio": 72.00,
+                "healthFactor": 1.2,
+                "riskLevel": "risky"
+            }
+        ]
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url)
+            response.raise_for_status()  # Lève une exception pour les statuts 4xx/5xx
+
+            data = response.json()
+            # L'API peut retourner un objet vide {} si aucune position n'est trouvée.
+            if not data or not isinstance(data, list):
+                 return []
+            return data
+
+        except httpx.HTTPStatusError as e:
+            # Gérer les erreurs HTTP spécifiques (ex: 404, 500)
+            raise HTTPException(status_code=e.response.status_code, detail=f"Erreur de l'API Jupiter Lend: {e.response.text}")
+        except httpx.RequestError as e:
+            # Gérer les erreurs de connexion (ex: timeout, DNS)
+            raise HTTPException(status_code=503, detail=f"Impossible de contacter l'API Jupiter Lend: {e}")
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=500, detail="Réponse invalide de l'API Jupiter Lend (format JSON attendu).")
