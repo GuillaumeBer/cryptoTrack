@@ -229,3 +229,47 @@ button:disabled {
   color: white;
   font-weight: 500;
 }
+
+/* New Navigation Styles */
+.main-nav {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 15px;
+  width: 100%;
+}
+
+.main-nav button {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  font-size: 1.1em;
+  margin: 0 20px;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: color 0.2s, border-bottom 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.main-nav button.active {
+  color: #6c5ce7;
+  border-bottom: 2px solid #6c5ce7;
+}
+
+.main-nav button:hover {
+  color: white;
+}
+
+/* App layout adjustments */
+.App-header {
+  padding-bottom: 0;
+}
+
+.App-content {
+  padding-top: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
