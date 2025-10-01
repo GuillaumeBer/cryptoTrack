@@ -18,6 +18,7 @@ from src.data_updater import run_update, update_progress
 # Switching to SelectorEventLoop, which is the default on other platforms,
 # resolves this issue by handling client disconnects more gracefully.
 if sys.platform == "win32":
+    print("Applying WindowsSelectorEventLoopPolicy for asyncio.")
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 app = FastAPI()
