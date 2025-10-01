@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 
 import threading
-import uvicorn
 import httpx
 from src.binance_client import get_price_from_binance
 from src.coingecko_client import get_price_from_coingecko
@@ -19,7 +18,6 @@ from src.data_updater import run_update, update_progress
 # Switching to SelectorEventLoop, which is the default on other platforms,
 # resolves this issue by handling client disconnects more gracefully.
 if sys.platform == "win32":
-    print("Applying WindowsSelectorEventLoopPolicy to prevent ConnectionResetError on Windows.")
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 app = FastAPI()
@@ -221,9 +219,3 @@ async def get_jupiter_lend_positions(wallet_address: str):
             raise HTTPException(status_code=503, detail=f"Impossible de contacter l'API Jupiter Lend: {e}")
         except json.JSONDecodeError:
             raise HTTPException(status_code=500, detail="Réponse invalide de l'API Jupiter Lend (format JSON attendu).")
-
-if __name__ == "__main__":
-    # This block allows the script to be run directly with `python src/main.py`
-    # It ensures the Windows-specific asyncio policy is applied before the server starts.
-    print("Starting server programmatically...")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
