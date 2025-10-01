@@ -4,3 +4,4 @@ uvicorn
 pycoingecko
 ratelimit
 httpx
+httpx

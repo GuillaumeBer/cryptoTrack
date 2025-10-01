@@ -130,25 +130,43 @@ async def get_refresh_status():
 @app.get("/api/price")
 async def get_price(symbol: str, coin_id: str, is_tradable: bool):
     """
-    Récupère le prix d'une cryptomonnaie, soit de Binance si elle est tradable,
-    soit de CoinGecko sinon.
+    Asynchronously retrieves the price of a cryptocurrency.
+    It first tries Binance if the coin is marked as tradable,
+    and falls back to CoinGecko if the Binance lookup fails or is not applicable.
     """
     price = None
     source = None
+    binance_symbol = f"{symbol.upper()}USDC"
+
+    # Log the initial attempt
+    print(f"Fetching price for {symbol} (CoinID: {coin_id}, Tradable: {is_tradable})")
 
     if is_tradable:
-        # Le symbole pour Binance doit être au format 'BTCUSDC'
-        binance_symbol = f"{symbol.upper()}USDC"
-        price = get_price_from_binance(binance_symbol)
-        source = "Binance"
+        print(f"Attempting to fetch price from Binance for {binance_symbol}...")
+        price = await get_price_from_binance(binance_symbol)
+        if price is not None:
+            source = "Binance"
+            print(f"Successfully fetched price from Binance: {price}")
+        else:
+            print(f"Failed to fetch price from Binance for {binance_symbol}. Falling back to CoinGecko.")
 
     if price is None:
-        # Si non tradable sur Binance ou si l'appel a échoué, utiliser CoinGecko
-        price = get_price_from_coingecko(coin_id)
-        source = "CoinGecko" if source is None else "Binance (fallback CoinGecko)"
+        # This block runs if the coin is not tradable on Binance or if the Binance API call failed.
+        print(f"Attempting to fetch price from CoinGecko for coin_id: {coin_id}...")
+        price = await get_price_from_coingecko(coin_id)
+        if price is not None:
+            # If the initial source was None, it means we came directly here.
+            # Otherwise, it was a fallback.
+            source = "CoinGecko" if source is None else "Binance (fallback CoinGecko)"
+            print(f"Successfully fetched price from CoinGecko: {price}")
+        else:
+            print(f"Failed to fetch price from CoinGecko for coin_id: {coin_id}.")
 
     if price is None:
-        raise HTTPException(status_code=404, detail="Impossible de récupérer le prix pour le symbole demandé.")
+        # After trying all sources, if price is still None, raise an error.
+        error_message = f"Could not retrieve price for {symbol} from any available source."
+        print(error_message)
+        raise HTTPException(status_code=404, detail=error_message)
 
     return {"symbol": symbol, "price": price, "source": source}
 
