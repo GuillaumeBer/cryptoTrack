@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Home } from 'lucide-react';
 import './App.css';
 import LendingPage from './LendingPage';
+import LandingPage from './LandingPage';
 
 function App() {
-  const [view, setView] = useState('priceChecker'); // 'priceChecker' or 'lending'
+  const [view, setView] = useState('landing'); // 'landing', 'priceChecker', or 'lending'
   const [search, setSearch] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -202,80 +204,93 @@ function App() {
     return '0.00';
   };
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <nav className="main-nav">
-          <button onClick={() => setView('priceChecker')} className={view === 'priceChecker' ? 'active' : ''}>
-            Crypto Price Checker
-          </button>
-          <button onClick={() => setView('lending')} className={view === 'lending' ? 'active' : ''}>
-            Jupiter Lending
-          </button>
-        </nav>
-
-        {view === 'priceChecker' && (
-          <div className="controls-container">
-            <button onClick={handleRefresh} disabled={showProgressBar}>
-              {showProgressBar ? 'En cours...' : 'Rafraîchir les Données'}
-            </button>
-            {refreshMessage && <p className="refresh-message">{refreshMessage}</p>}
-          </div>
-        )}
-
-        {showProgressBar && view === 'priceChecker' && (
-          <div className="progress-container">
-            <p>{refreshProgress.stage}</p>
-            <div className="progress-bar-background">
-              <div
-                className="progress-bar-foreground"
-                style={{ width: `${(refreshProgress.current / (refreshProgress.total || 1)) * 100}%` }}
-              ></div>
-            </div>
-            <p>{refreshProgress.total > 0 ? `${refreshProgress.current} / ${refreshProgress.total}`: ''}</p>
-          </div>
-        )}
-      </header>
-      <main className="App-content">
-        {view === 'priceChecker' ? (
+  const renderContent = () => {
+    switch (view) {
+      case 'priceChecker':
+        return (
           <>
-            <h1>Chercher une Paire de Trading USDC</h1>
-            <div className="search-container">
-              <input
-                type="text"
-                placeholder="Commencez à taper (ex: Bitcoin)..."
-                value={search}
-                onChange={handleSearchChange}
-                className="search-input"
-                disabled={showProgressBar}
-              />
-              {isSearching && <div className="loader"></div>}
-              {suggestions.length > 0 && (
-                <ul className="suggestions-list">
-                  {suggestions.map((coin) => (
-                    <li key={coin.id} onClick={() => handleSelectCoin(coin)}>
-                      {coin.name} ({coin.symbol})
-                    </li>
-                  ))}
-                </ul>
+            <header className="App-header">
+              {view !== 'landing' && (
+                <button onClick={() => setView('landing')} className="home-button" title="Go to Home">
+                  <Home className="w-6 h-6" />
+                </button>
               )}
-            </div>
-            <div className="price-display">
-              {isPriceLoading && <div className="loader"></div>}
-              {priceError && <p className="error-message">Erreur : {priceError}</p>}
-              {priceInfo && (
-                <div className="price-result">
-                  <h2>Prix pour {selectedCoin.name} ({priceInfo.symbol})</h2>
-                  <p className="price">${formatPrice(priceInfo.price)}</p>
-                  <p className="source">Source: {priceInfo.source}</p>
+              <div className="controls-container">
+                <button onClick={handleRefresh} disabled={showProgressBar}>
+                  {showProgressBar ? 'En cours...' : 'Rafraîchir les Données'}
+                </button>
+                {refreshMessage && <p className="refresh-message">{refreshMessage}</p>}
+              </div>
+
+              {showProgressBar && (
+                <div className="progress-container">
+                  <p>{refreshProgress.stage}</p>
+                  <div className="progress-bar-background">
+                    <div
+                      className="progress-bar-foreground"
+                      style={{ width: `${(refreshProgress.current / (refreshProgress.total || 1)) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p>{refreshProgress.total > 0 ? `${refreshProgress.current} / ${refreshProgress.total}`: ''}</p>
                 </div>
               )}
-            </div>
+            </header>
+            <main className="App-content">
+              <h1>Chercher une Paire de Trading USDC</h1>
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Commencez à taper (ex: Bitcoin)..."
+                  value={search}
+                  onChange={handleSearchChange}
+                  className="search-input"
+                  disabled={showProgressBar}
+                />
+                {isSearching && <div className="loader"></div>}
+                {suggestions.length > 0 && (
+                  <ul className="suggestions-list">
+                    {suggestions.map((coin) => (
+                      <li key={coin.id} onClick={() => handleSelectCoin(coin)}>
+                        {coin.name} ({coin.symbol})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="price-display">
+                {isPriceLoading && <div className="loader"></div>}
+                {priceError && <p className="error-message">Erreur : {priceError}</p>}
+                {priceInfo && (
+                  <div className="price-result">
+                    <h2>Prix pour {selectedCoin.name} ({priceInfo.symbol})</h2>
+                    <p className="price">${formatPrice(priceInfo.price)}</p>
+                    <p className="source">Source: {priceInfo.source}</p>
+                  </div>
+                )}
+              </div>
+            </main>
           </>
-        ) : (
-          <LendingPage />
-        )}
-      </main>
+        );
+      case 'lending':
+        return (
+          <>
+            {view !== 'landing' && (
+                <button onClick={() => setView('landing')} className="home-button" title="Go to Home">
+                  <Home className="w-6 h-6" />
+                </button>
+              )}
+            <LendingPage />
+          </>
+        );
+      case 'landing':
+      default:
+        return <LandingPage setView={setView} />;
+    }
+  };
+
+  return (
+    <div className="App">
+      {renderContent()}
     </div>
   );
 }
