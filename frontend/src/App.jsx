@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Home } from 'lucide-react';
 import './App.css';
-import LendingPage from './LendingPage';
-import LandingPage from './LandingPage';
+import LendingPage from './LendingPage.jsx';
+import LandingPage from './LandingPage.jsx';
 
 function App() {
   const [view, setView] = useState('landing'); // 'landing', 'priceChecker', or 'lending'
