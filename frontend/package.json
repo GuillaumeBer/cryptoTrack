@@ -42,5 +42,9 @@
     "nth-check": "2.0.1",
     "postcss": "8.4.31",
     "svgo": "2.8.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "tailwindcss": "^4.1.13"
   }
 }
