@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders page header', () => {
+test('renders landing page header', () => {
   render(<App />);
-  const headerElement = screen.getByText(/Chercher une Paire de Trading USDC/i);
+  const headerElement = screen.getByText(/Crypto Dashboard/i);
   expect(headerElement).toBeInTheDocument();
 });
