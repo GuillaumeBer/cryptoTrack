@@ -1,9 +1,12 @@
 import os
 import json
 from functools import lru_cache
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Dict, Any, Optional
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+from typing import List, Dict, Any, Optional, Callable
+import logging
 
 import threading
 import httpx
@@ -11,7 +14,31 @@ from src.binance_client import get_price_from_binance
 from src.coingecko_client import get_price_from_coingecko
 from src.data_updater import run_update, update_progress
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = FastAPI()
+
+# Custom middleware to gracefully handle client disconnects (ConnectionResetError)
+class GracefulDisconnectMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Callable):
+        try:
+            return await call_next(request)
+        except ConnectionResetError:
+            # This error occurs when the client closes the connection prematurely,
+            # which is common in web apps (e.g., user navigates away or cancels a request).
+            # We log it as a warning to reduce log noise, as it's not a server-side issue.
+            logger.warning(f"Client disconnected prematurely: {request.method} {request.url.path}")
+            # We cannot send a response because the connection is already closed.
+            # Returning a dummy response with status 204 prevents the error from propagating
+            # and being logged as a server error.
+            return Response(status_code=204)
+
+# Add the custom middleware to the application stack.
+# It should be one of the first middleware to catch the exception early.
+app.add_middleware(GracefulDisconnectMiddleware)
+
 
 # Configuration CORS
 origins = [
